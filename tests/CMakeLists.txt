@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.1)
 
 if(MSVC)
-	set(CMAKE_CXX_FLAGS "/std:c++latest /EHsc -D_SCL_SECURE_NO_WARNINGS")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /EHsc -D_SCL_SECURE_NO_WARNINGS /permissive-")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -Wextra -Werror")
 endif()
 
 find_path(CATCH_INCLUDE_DIR catch.hpp)
