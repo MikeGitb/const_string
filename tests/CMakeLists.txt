@@ -13,4 +13,5 @@ add_executable(const_string_test main.cpp tests.cpp)
 target_link_libraries(const_string_test PUBLIC const_string)
 target_include_directories(const_string_test PUBLIC ${CatchPath})
 
-add_test(ALL const_string_test)
+include(ParseAndAddCatchTests.cmake)
+ParseAndAddCatchTests(const_string_test)
