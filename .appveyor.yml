@@ -1,0 +1,12 @@
+image:
+  - Visual Studio 2017
+clone_folder: c:\projects\source
+build_script:
+- vcpkg install catch:x64-windows
+- vcpkg install catch:x86-windows
+- mkdir -p build
+- cd build
+- cmake -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake c:\projects\source -G "Visual Studio 15 Win64"
+- cmake --build . --config "Debug"
+test_script:
+- cmd: ctest -C Debug
