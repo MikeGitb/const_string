@@ -1,5 +1,8 @@
 image:
   - Visual Studio 2017
+platform:
+  - x86
+  - x64
 clone_folder: c:\projects\source
 build_script:
 - vcpkg install catch:x64-windows
