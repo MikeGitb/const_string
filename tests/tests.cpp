@@ -27,6 +27,7 @@ TEST_CASE("Provides standard container type defs", "[const_string]")
 	T::const_reverse_iterator 	crit{};
 	T::size_type 	s{};
 	T::difference_type 	d{};
+	REQUIRE(true);
 }
 
 TEST_CASE("Provides standard container type defs 2", "[const_zstring]")
@@ -44,6 +45,7 @@ TEST_CASE("Provides standard container type defs 2", "[const_zstring]")
 	T::const_reverse_iterator 	crit{};
 	T::size_type 	s{};
 	T::difference_type 	d{};
+	REQUIRE(true);
 }
 
 TEST_CASE("Construction from literal", "[const_string]")
