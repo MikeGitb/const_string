@@ -4,7 +4,7 @@ project(const_string_tests LANGUAGES CXX)
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /EHsc -D_SCL_SECURE_NO_WARNINGS /permissive-")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -fsanitize=undefined  -Wall -Wextra -Werror -Wno-unused-variable -fno-omit-frame-pointer -pthread")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -std=c++17 -O0 -g -fsanitize=undefined  -Wall -Wextra -Werror -Wno-unused-variable -fno-omit-frame-pointer -pthread")
 endif()
 
 find_path(CatchPath catch.hpp)
