@@ -167,33 +167,14 @@ private:
 	template <class... ARGS>
 	inline static void _write_to_buffer( char* buffer, const ARGS&... args )
 	{
-	#ifdef _MSC_VER
-		int ignore[] = { (_addTo(buffer, args),0) ... };
-	#else
 		( _addTo( buffer, args ), ... );
-	#endif // _MVC
-	}
-
-	template <class... ARGS>
-	constexpr inline static size_t _total_size(const ARGS& ... args)
-	{
-	#ifdef _MSC_VER
-		const size_t sizes[] = { args.size() ... };
-		size_t accum = 0;
-		for (auto i : sizes) {
-			accum += i;
-		}
-		return accum;
-	#else
-		return (0 + ... + args.size());
-	#endif // _MVC_VER
 	}
 
 	template <class... ARGS>
 	inline static const_zstring _concat_impl( const ARGS&... args )
 	{
-		const size_t newSize = _total_size(args...);//( 0 + ... + args.size() );
-		auto		 data	 = _allocate_null_terminated_char_buffer( newSize );
+		const size_t newSize = ( 0 + ... + args.size() );
+		auto		 data	 = _allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( data.get(), args... );
 		return const_zstring( std::move( data ), newSize );
 	}
