@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Catch2 CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
-add_executable(const_string_test main.cpp tests.cpp)
+add_executable(const_string_test main.cpp tests.cpp test_split.cpp test_substr.cpp)
 target_link_libraries(const_string_test PUBLIC const_string Catch2::Catch2 Threads::Threads)
 
 if(MSVC)
