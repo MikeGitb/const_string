@@ -100,13 +100,6 @@ protected:
 
 	const std::string_view& _as_strview() const { return static_cast<const std::string_view&>( *this ); }
 
-	static inline detail::atomic_ref_cnt_buffer _allocate_null_terminated_char_buffer( int size )
-	{
-		detail::atomic_ref_cnt_buffer data( size + 1 );
-		data.get()[size] = '\0'; // zero terminate
-		return data;
-	}
-
 	void _copyFrom( const std::string_view other )
 	{
 		if( other.data() == nullptr ) {
@@ -114,7 +107,7 @@ protected:
 			return;
 		}
 		// create buffer and copy data over
-		auto data = _allocate_null_terminated_char_buffer( static_cast<int>(other.size()) );
+		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>(other.size()) );
 		std::copy_n( other.data(), other.size(), data.get() );
 
 		// initialize ConstString data fields;
@@ -173,7 +166,7 @@ private:
 	inline static const_zstring _concat_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
-		auto		 data	 = _allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto		 data	 = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( data.get(), args... );
 		return const_zstring( std::move( data ), newSize );
 	}

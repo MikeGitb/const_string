@@ -82,6 +82,13 @@ private:
 	Cnt_t* _cnt = nullptr;
 };
 
+inline detail::atomic_ref_cnt_buffer allocate_null_terminated_char_buffer( int size )
+{
+	detail::atomic_ref_cnt_buffer data( size + 1 );
+	data.get()[size] = '\0'; // zero terminate
+	return data;
+}
+
 inline constexpr std::string_view getEmptyZeroTerminatedStringView()
 {
 	return std::string_view{""};
