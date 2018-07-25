@@ -1,17 +1,31 @@
 cmake_minimum_required(VERSION 3.2)
 project(const_string_tests LANGUAGES CXX)
 
-if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest /EHsc -D_SCL_SECURE_NO_WARNINGS /permissive-")
-else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage -std=c++17 -O0 -g -fsanitize=undefined  -Wall -Wextra -Werror -Wno-unused-variable -fno-omit-frame-pointer -pthread")
-endif()
+set(CMAKE_CXX_STANDARD 17)
 
-find_path(CatchPath catch.hpp)
+find_package(Catch2 REQUIRED)
+find_package(Threads REQUIRED)
 
 add_executable(const_string_test main.cpp tests.cpp)
-target_link_libraries(const_string_test PUBLIC const_string)
-target_include_directories(const_string_test PUBLIC ${CatchPath})
+target_link_libraries(const_string_test PUBLIC const_string Catch2::Catch2 Threads::Threads)
+
+if(MSVC)
+	target_compile_options(const_string_test
+		PUBLIC
+			/permissive-
+			-D_SCL_SECURE_NO_WARNINGS
+	)
+else()
+	target_compile_options(const_string_test
+		PUBLIC
+			-fprofile-arcs
+			-ftest-coverage
+			-fno-omit-frame-pointer
+			-g
+			-fsanitize=undefined
+			-Wall -Wextra -Werror -Wno-unused-variable
+	)
+endif()
 
 include(ParseAndAddCatchTests.cmake)
 ParseAndAddCatchTests(const_string_test)
