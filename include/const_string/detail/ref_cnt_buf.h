@@ -12,12 +12,12 @@ namespace detail {
 class atomic_ref_cnt_buffer {
 	using Cnt_t = std::atomic_int;
 
-	static constexpr size_t required_space = sizeof( Cnt_t );
+	static constexpr int required_space = (int) sizeof( Cnt_t );
 
 public:
 	atomic_ref_cnt_buffer() = default;
 
-	explicit atomic_ref_cnt_buffer( std::size_t buffer_size )
+	explicit atomic_ref_cnt_buffer( int buffer_size )
 	{
 		auto data = new char[buffer_size + required_space];
 		_cnt	  = new( data ) Cnt_t{1};
@@ -33,14 +33,13 @@ public:
 	}
 
 	atomic_ref_cnt_buffer( atomic_ref_cnt_buffer&& other ) noexcept
-		: _cnt{other._cnt}
+		: _cnt{std::exchange(other._cnt,nullptr)}
 	{
-		other._cnt = nullptr;
 	}
 
 	atomic_ref_cnt_buffer& operator=( const atomic_ref_cnt_buffer& other ) noexcept
 	{
-		// inc before dec to protect against self assignment
+		// inc before dec to protect against dropping in self assignment
 		other._incref();
 		_decref();
 		_cnt = other._cnt;
@@ -50,9 +49,9 @@ public:
 
 	atomic_ref_cnt_buffer& operator=( atomic_ref_cnt_buffer&& other ) noexcept
 	{
+		assert( this != &other && "Move assignment to self is not allowed" );
 		_decref();
-		_cnt	   = other._cnt;
-		other._cnt = nullptr;
+		_cnt = std::exchange( other._cnt, nullptr );
 		return *this;
 	}
 

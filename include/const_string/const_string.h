@@ -100,7 +100,7 @@ protected:
 
 	const std::string_view& _as_strview() const { return static_cast<const std::string_view&>( *this ); }
 
-	static inline detail::atomic_ref_cnt_buffer _allocate_null_terminated_char_buffer( size_t size )
+	static inline detail::atomic_ref_cnt_buffer _allocate_null_terminated_char_buffer( int size )
 	{
 		detail::atomic_ref_cnt_buffer data( size + 1 );
 		data.get()[size] = '\0'; // zero terminate
@@ -114,7 +114,7 @@ protected:
 			return;
 		}
 		// create buffer and copy data over
-		auto data = _allocate_null_terminated_char_buffer( other.size() );
+		auto data = _allocate_null_terminated_char_buffer( static_cast<int>(other.size()) );
 		std::copy_n( other.data(), other.size(), data.get() );
 
 		// initialize ConstString data fields;
@@ -160,8 +160,7 @@ private:
 	//######## impl helper for concat ###############
 	static void _addTo( char*& buffer, const std::string_view str )
 	{
-		std::copy_n( str.data(), str.size(), buffer );
-		buffer += str.size();
+		buffer = std::copy_n( str.data(), str.size(), buffer );
 	}
 
 	template <class... ARGS>
@@ -204,8 +203,7 @@ inline const_zstring const_string::createZStr() &&
 }
 
 /**
- * Function that can concatenate an arbitrary number of objects from which a mart::string_view can be constructed
- * returned constStr will always be zero terminated
+ * Function that can concatenate an arbitrary number of objects from which a std::string_view can be constructed
  */
 template <class... ARGS>
 const_zstring concat( const ARGS&... args )
