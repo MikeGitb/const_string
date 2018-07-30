@@ -6,13 +6,14 @@
 #include <cstdint>
 #include <new>
 #include <string_view>
+#include <utility>
 
 namespace detail {
 
 class atomic_ref_cnt_buffer {
 	using Cnt_t = std::atomic_int;
 
-	static constexpr int required_space = (int) sizeof( Cnt_t );
+	static constexpr int required_space = (int)sizeof( Cnt_t );
 
 public:
 	atomic_ref_cnt_buffer() = default;
@@ -20,20 +21,20 @@ public:
 	explicit atomic_ref_cnt_buffer( int buffer_size )
 	{
 		auto data = new char[buffer_size + required_space];
-		_cnt	  = new( data ) Cnt_t{1};
+		_cnt	  = new( data ) Cnt_t {1};
 
 		// TODO: Is this guaranteed by the standard?
 		assert( reinterpret_cast<char*>( _cnt ) == data );
 	}
 
 	atomic_ref_cnt_buffer( const atomic_ref_cnt_buffer& other ) noexcept
-		: _cnt{other._cnt}
+		: _cnt {other._cnt}
 	{
 		_incref();
 	}
 
 	atomic_ref_cnt_buffer( atomic_ref_cnt_buffer&& other ) noexcept
-		: _cnt{std::exchange(other._cnt,nullptr)}
+		: _cnt {std::exchange( other._cnt, nullptr )}
 	{
 	}
 
@@ -74,9 +75,7 @@ private:
 
 	void _incref() const noexcept
 	{
-		if( _cnt ) {
-			_cnt->fetch_add( 1, std::memory_order_relaxed );
-		}
+		if( _cnt ) { _cnt->fetch_add( 1, std::memory_order_relaxed ); }
 	}
 
 	Cnt_t* _cnt = nullptr;
@@ -91,7 +90,7 @@ inline detail::atomic_ref_cnt_buffer allocate_null_terminated_char_buffer( int s
 
 inline constexpr std::string_view getEmptyZeroTerminatedStringView()
 {
-	return std::string_view{""};
+	return std::string_view {""};
 }
 
 }
