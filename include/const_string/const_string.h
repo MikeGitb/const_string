@@ -7,6 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 class const_zstring;
 class const_string : public std::string_view {
@@ -77,6 +78,53 @@ public:
 	{
 		const auto size = this->find( sentinel, offset );
 		return substr( offset, size == npos ? this->size() - offset : size - offset );
+	}
+
+	enum class Split { Drop, Before, After };
+
+	std::pair<const_string, const_string> split( std::size_t i ) const
+	{
+		assert( i < size() || i == npos );
+		if( i == npos ) { return {*this, {}}; }
+		return {substr( 0, i ), substr( i, npos )};
+	}
+
+	std::pair<const_string, const_string> split( std::size_t i, Split s ) const
+	{
+		assert( i < size() || i == npos );
+		if( i == npos ) { return {*this, {}}; }
+		return {
+			substr( 0, i + ( s == Split::After ) ),
+			substr( i + ( s == Split::After || s == Split::Drop ), npos )
+		};
+	}
+
+	std::pair<const_string, const_string> split_first( char c = ' ', Split s = Split::Drop ) const
+	{
+		auto pos = this->find( c );
+		return split( pos, s );
+	}
+
+	std::pair<const_string, const_string> split_last( char c = ' ', Split s = Split::Drop ) const
+	{
+		auto pos = this->rfind( c );
+		return split( pos, s );
+	}
+
+	std::vector<const_string> split_full( char delimiter ) const
+	{
+		std::vector<const_string> ret;
+		ret.reserve( 10 );
+
+		const_string remainder = *this;
+		const_string split_part;
+
+		auto binder = std::tie( split_part, remainder );
+		while( !remainder.empty() ) {
+			binder = remainder.split_first( delimiter );
+			ret.push_back( std::move( split_part ) );
+		}
+		return ret;
 	}
 
 	bool isZeroTerminated() const { return this->data()[size()] == '\0'; }
