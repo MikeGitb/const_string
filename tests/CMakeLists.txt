@@ -11,6 +11,7 @@ find_package(Threads REQUIRED)
 
 add_executable(const_string_test main.cpp tests.cpp test_split.cpp test_substr.cpp)
 target_link_libraries(const_string_test PUBLIC const_string Catch2::Catch2 Threads::Threads)
+target_compile_definitions(const_string_test PUBLIC -DCONST_STRING_DEBUG_HOOKS)
 
 if(MSVC)
 	target_compile_options(const_string_test

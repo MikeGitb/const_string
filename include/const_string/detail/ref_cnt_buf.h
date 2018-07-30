@@ -10,6 +10,73 @@
 
 namespace detail {
 
+#ifdef CONST_STRING_DEBUG_HOOKS
+struct Stats {
+	std::atomic_uint64_t total_cnt_accesses{0};
+	std::atomic_uint64_t total_allocs{0};
+	std::atomic_uint64_t current_allocs{0};
+	std::atomic_uint64_t inc_ref_cnt{0};
+	std::atomic_uint64_t dec_ref_cnt{0};
+
+	void inc_ref()
+	{
+		total_cnt_accesses.fetch_add( 1, std::memory_order_relaxed );
+		inc_ref_cnt.fetch_add( 1, std::memory_order_relaxed );
+	}
+
+	void dec_ref()
+	{
+		total_cnt_accesses.fetch_add( 1, std::memory_order_relaxed );
+		dec_ref_cnt.fetch_add( 1, std::memory_order_relaxed );
+	}
+
+	void alloc()
+	{
+		total_allocs.fetch_add( 1, std::memory_order_relaxed );
+		current_allocs.fetch_add( 1, std::memory_order_relaxed );
+	}
+
+	void dealloc() { current_allocs.fetch_sub( 1, std::memory_order_relaxed ); }
+
+	std::uint64_t get_total_cnt_accesses() const { return total_cnt_accesses.load( std::memory_order_relaxed ); };
+	std::uint64_t get_total_allocs() const { return total_allocs.load( std::memory_order_relaxed ); };
+	std::uint64_t get_current_allocs() const { return current_allocs.load( std::memory_order_relaxed ); };
+	std::uint64_t get_inc_ref_cnt() const { return inc_ref_cnt.load( std::memory_order_relaxed ); };
+	std::uint64_t get_dec_ref_cnt() const { return dec_ref_cnt.load( std::memory_order_relaxed ); };
+
+	constexpr Stats() noexcept = default;
+	Stats( const Stats& other )
+		: total_cnt_accesses( other.total_cnt_accesses.load( std::memory_order_relaxed ) )
+		, total_allocs( other.total_allocs.load( std::memory_order_relaxed ) )
+		, current_allocs( other.current_allocs.load( std::memory_order_relaxed ) )
+		, inc_ref_cnt( other.inc_ref_cnt.load( std::memory_order_relaxed ) )
+		, dec_ref_cnt( other.dec_ref_cnt.load( std::memory_order_relaxed ) )
+	{
+	}
+};
+#else
+struct Stats {
+	constexpr Stats() noexcept = default;
+
+	constexpr void inc_ref() noexcept {}
+	constexpr void dec_ref() noexcept {}
+	constexpr void alloc() noexcept {}
+	constexpr void dealloc() noexcept {}
+
+	constexpr std::uint64_t get_total_cnt_accesses() noexcept const { return 0; };
+	constexpr std::uint64_t get_total_allocs() const noexcept { return 0; };
+	constexpr std::uint64_t get_current_allocs() const noexcept { return 0; };
+	constexpr std::uint64_t get_inc_ref_cnt() const noexcept { return 0; };
+	constexpr std::uint64_t get_dec_ref_cnt() const noexcept { return 0; };
+};
+#endif
+
+static Stats& stats()
+{
+	static Stats stats{};
+	return stats;
+}
+
 class defer_ref_cnt_tag_t {
 };
 
@@ -28,6 +95,7 @@ public:
 
 	explicit atomic_ref_cnt_buffer( int buffer_size )
 	{
+		stats().alloc();
 		auto data = new char[buffer_size + required_space];
 		_cnt      = new( data ) Cnt_t{1};
 
@@ -83,6 +151,7 @@ public:
 		if( !_cnt ) {
 			return 0;
 		}
+		stats().inc_ref();
 		return _cnt->fetch_add( cnt, std::memory_order_relaxed ) + cnt;
 	}
 
@@ -90,7 +159,9 @@ private:
 	void _decref() const noexcept
 	{
 		if( _cnt ) {
+			stats().dec_ref();
 			if( _cnt->fetch_sub( 1 ) == 1 ) {
+				stats().dealloc();
 				_cnt->~Cnt_t();
 				delete[]( reinterpret_cast<char*>( _cnt ) );
 			}
@@ -100,6 +171,7 @@ private:
 	void _incref() const noexcept
 	{
 		if( _cnt ) {
+			stats().inc_ref();
 			_cnt->fetch_add( 1, std::memory_order_relaxed );
 		}
 	}
