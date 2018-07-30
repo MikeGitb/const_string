@@ -133,15 +133,12 @@ TEST_CASE( "Split Separator multi" )
 
 TEST_CASE( "Split full" )
 {
-	std::string               base = "Hello my dear! How are you?";
-	const_string              s( base );
 	std::vector<const_string> ref{"Hello", "my", "dear!", "How", "are", "you?"};
 
-	// const_string s("Hello my dear! How are you?");
-	auto words = s.split_full( ' ' );
-	for( auto w : words ) {
-		std::cout << "[" << w << "]\n";
-	}
+	std::string  base = "Hello my dear! How are you?";
+	const_string s( base );
+
+	const auto words = s.split_full( ' ' );
 
 	CHECK( words.size() == 6 );
 	CHECK( words == ref );
