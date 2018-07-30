@@ -7,26 +7,29 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - llvm-toolchain-trusty-5.0
 
     packages:
-    - cmake
-    - catch
-    - g++-7
-    - clang-5.0
+    - g++-8
 
 matrix:
   include:
-    - env: COMPILER=g++-7
-    - env: COMPILER=clang++-5.0
+    - env: MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - env: MATRIX_EVAL="CC=clang && CXX=clang++"
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+install:
+  - git clone https://github.com/catchorg/Catch2.git && mkdir -p Catch2/build && cd Catch2/build
+  - cmake -DCMAKE_INSTALL_PREFIX=~/cmake_local -DCATCH_BUILD_TESTING=OFF -DCATCH_ENABLE_WERROR=Off -DCATCH_INSTALL_DOCS=OFF ..
+  - cmake --build .
+  - make install
+  - cd ../..
 
 script:
-  - mkdir build
-  - cd build
-  - export CXX=$COMPILER
-  - cmake ..
-  - make
-  - ctest
+  - mkdir build && cd build
+  - cmake -DCMAKE_PREFIX_PATH=~/cmake_local -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake --build .
+  - ctest .
   - cd ..
   - bash <(curl -s https://codecov.io/bash)
-  
