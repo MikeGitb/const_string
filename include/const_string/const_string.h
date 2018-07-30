@@ -7,6 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <string_view>
+#include <vector>
 
 class const_zstring;
 class const_string : public std::string_view {
@@ -79,27 +80,68 @@ public:
 		return substr( offset, size == npos ? this->size() - offset : size - offset );
 	}
 
-	enum class Split{
-		Drop, Before, After
-	};
-	std::pair<const_string, const_string> split(std::ptrdiff_t i) {
-		return { substr(0,i),substr(i,npos) };
+	enum class Split { Drop, Before, After };
+	std::pair<const_string, const_string> split( std::size_t i ) const
+	{
+		assert( i < size() || i == npos );
+		if( i == npos ) { return {*this, {}}; }
+		return {substr( 0, i ), substr( i, npos )};
 	}
 
-	std::pair<const_string, const_string> split(std::ptrdiff_t i, Split s) {
-		return {
-			substr(0,i+(s==Split::After)),
-			substr(i+ (s == Split::After || s == Split::Drop),npos)
-		};
+	std::pair<const_string, const_string> split( std::size_t i, Split s ) const
+	{
+		assert( i < size() || i == npos );
+		if( i == npos ) { return {*this, {}}; }
+		return {substr( 0, i + ( s == Split::After ) ), substr( i + ( s == Split::After || s == Split::Drop ), npos )};
 	}
 
-	std::pair<const_string, const_string> split_first(char c, Split s = Split::Drop) {
-		auto pos = this->find(c);
-		return split(pos,s);
+	std::pair<const_string, const_string> split_first() const
+	{
+		auto pos = this->find( ' ' );
+		return split( pos, Split::Drop );
 	}
-	std::pair<const_string, const_string> split_last(char c, Split s = Split::Drop) {
-		auto pos = this->rfind(c);
-		return split(pos, s);
+
+	std::pair<const_string, const_string> split_last() const
+	{
+		auto pos = this->rfind( ' ' );
+		return split( pos, Split::Drop );
+	}
+
+	std::pair<const_string, const_string> split_first( char c, Split s = Split::Drop ) const
+	{
+		auto pos = this->find( c );
+		return split( pos, s );
+	}
+
+	std::pair<const_string, const_string> split_last( char c, Split s = Split::Drop ) const
+	{
+		auto pos = this->rfind( c );
+		return split( pos, s );
+	}
+
+	std::vector<const_string> split_full( char delimiter ) const
+	{
+		std::vector<const_string> ret;
+		ret.reserve( 10 );
+
+		const_string remainder = *this;
+		const_string split_part;
+
+		auto binder = std::tie( split_part, remainder );
+		while( !remainder.empty() ) {
+			binder = remainder.split_first( delimiter );
+			ret.push_back( std::move( split_part ) );
+		}
+		return ret;
+
+		// auto const				size	   = this->size();
+		// const_string::size_type next_start = 0;
+		//// danger: first, we are creating the strings as if from a string litteral - the ref_count is bumped later
+		// for( int i = 0; i < size; ++i ) {
+		//	if( data()[i] == delimiter ) {
+		//		ret.emplace_back( std::string_view( data() + next_start, i - next_start ), static_lifetime_tag {} );
+		//	}
+		//}
 	}
 
 	bool isZeroTerminated() const { return this->data()[size()] == '\0'; }
