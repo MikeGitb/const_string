@@ -15,36 +15,36 @@ void requireZero(std::string_view view) {
 TEST_CASE("Provides standard container type defs", "[const_string]")
 {
 	using T = const_string;
-	T::traits_type 	traits{};
-	T::value_type 	v{};
-	T::pointer		p{};
-	T::const_pointer cp{};
-	T::reference 	r = v;
-	T::const_reference 	cr = v;
-	T::const_iterator  cit{};
-	T::iterator 	it{};
-	T::reverse_iterator 	rit{};
-	T::const_reverse_iterator 	crit{};
-	T::size_type 	s{};
-	T::difference_type 	d{};
+	[[maybe_unused]] T::traits_type			   traits {};
+	[[maybe_unused]] T::value_type			   v {};
+	[[maybe_unused]] T::pointer				   p {};
+	[[maybe_unused]] T::const_pointer		   cp {};
+	[[maybe_unused]] T::reference			   r  = v;
+	[[maybe_unused]] T::const_reference		   cr = v;
+	[[maybe_unused]] T::const_iterator		   cit {};
+	[[maybe_unused]] T::iterator	           it {};
+	[[maybe_unused]] T::reverse_iterator       rit {};
+	[[maybe_unused]] T::const_reverse_iterator crit {};
+	[[maybe_unused]] T::size_type			   s {};
+	[[maybe_unused]] T::difference_type		   d {};
 	REQUIRE(true);
 }
 
 TEST_CASE("Provides standard container type defs 2", "[const_zstring]")
 {
 	using T = const_zstring;
-	T::traits_type 	traits{};
-	T::value_type 	v{};
-	T::pointer		p{};
-	T::const_pointer cp{};
-	T::reference 	r = v;
-	T::const_reference 	cr = v;
-	T::const_iterator  cit{};
-	T::iterator 	it{};
-	T::reverse_iterator 	rit{};
-	T::const_reverse_iterator 	crit{};
-	T::size_type 	s{};
-	T::difference_type 	d{};
+	[[maybe_unused]] T::traits_type traits {};
+	[[maybe_unused]] T::value_type  v {};
+	[[maybe_unused]] T::pointer		p {};
+	[[maybe_unused]] T::const_pointer cp {};
+	[[maybe_unused]] T::reference	 r  = v;
+	[[maybe_unused]] T::const_reference cr = v;
+	[[maybe_unused]] T::const_iterator  cit {};
+	[[maybe_unused]] T::iterator		it {};
+	[[maybe_unused]] T::reverse_iterator rit {};
+	[[maybe_unused]] T::const_reverse_iterator crit {};
+	[[maybe_unused]] T::size_type			   s {};
+	[[maybe_unused]] T::difference_type		   d {};
 	REQUIRE(true);
 }
 
