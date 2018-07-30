@@ -28,8 +28,8 @@ install:
 
 script:
   - mkdir build && cd build
-  - cmake -DCMAKE_PREFIX_PATH=~/cmake_local -DCMAKE_BUILD_TYPE=Debug ..
-  - cmake --build .
+  - cmake -DCMAKE_PREFIX_PATH=~/cmake_local -DCMAKE_BUILD_TYPE=Debug -DCONST_STRING_COVERAGE=On ..
+  - cmake --build . -- -j2
   - ctest .
   - cd ..
   - bash <(curl -s https://codecov.io/bash)
