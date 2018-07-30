@@ -10,13 +10,21 @@
 
 namespace detail {
 
+class defer_ref_cnt_tag_t {
+};
+
 class atomic_ref_cnt_buffer {
 	using Cnt_t = std::atomic_int;
 
 	static constexpr int required_space = (int)sizeof( Cnt_t );
 
 public:
-	atomic_ref_cnt_buffer() = default;
+	constexpr atomic_ref_cnt_buffer() noexcept = default;
+
+	constexpr atomic_ref_cnt_buffer( const atomic_ref_cnt_buffer& other, defer_ref_cnt_tag_t ) noexcept
+		: _cnt{other._cnt}
+	{
+	}
 
 	explicit atomic_ref_cnt_buffer( int buffer_size )
 	{
@@ -61,6 +69,22 @@ public:
 	char* get() noexcept { return reinterpret_cast<char*>( _cnt ) + sizeof( Cnt_t ); }
 
 	friend void swap( atomic_ref_cnt_buffer& l, atomic_ref_cnt_buffer& r ) noexcept { std::swap( l._cnt, r._cnt ); }
+
+	int get_ref_cnt() const
+	{
+		if( !_cnt ) {
+			return 0;
+		}
+		return _cnt->load( std::memory_order_acquire );
+	}
+
+	int add_ref_cnt( int cnt ) const
+	{
+		if( !_cnt ) {
+			return 0;
+		}
+		return _cnt->fetch_add( cnt, std::memory_order_relaxed ) + cnt;
+	}
 
 private:
 	void _decref() const noexcept

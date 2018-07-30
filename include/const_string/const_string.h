@@ -118,14 +118,20 @@ public:
 		std::vector<const_string> ret;
 		ret.reserve( 10 );
 
-		const_string remainder = *this;
-		const_string split_part;
-
-		auto binder = std::tie( split_part, remainder );
-		while( !remainder.empty() ) {
-			binder = remainder.split_first( delimiter );
-			ret.push_back( std::move( split_part ) );
+		iterator it = this->begin();
+		while( true ) {
+			auto new_it = std::find( it, this->end(), delimiter );
+			assert( new_it >= it );
+			const std::string_view subview{&( *it ), static_cast<std::size_t>( new_it - it )};
+			ret.push_back( const_string( subview, _data, detail::defer_ref_cnt_tag_t{} ) );
+			if( new_it == end() ) {
+				break;
+			}
+			it = new_it + 1;
 		}
+
+		_data.add_ref_cnt( ret.size() );
+
 		return ret;
 	}
 
@@ -142,6 +148,12 @@ protected:
 	};
 	constexpr const_string( std::string_view sv, static_lifetime_tag )
 		: std::string_view( sv )
+	{
+	}
+
+	constexpr const_string( std::string_view sv, const detail::atomic_ref_cnt_buffer& data, detail::defer_ref_cnt_tag_t )
+		: std::string_view( sv )
+		, _data{data, detail::defer_ref_cnt_tag_t{}}
 	{
 	}
 
