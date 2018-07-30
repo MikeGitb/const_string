@@ -21,7 +21,7 @@ public:
 	const_string( std::string_view other ) { _copyFrom( other ); }
 
 	// NOTE: Use only for string literals (arrays with static storage duration)!!!
-	template <size_t N>
+	template<size_t N>
 	constexpr const_string( const char ( &other )[N] ) noexcept
 		: std::string_view( other )
 	// we don't have to initialize the shared_ptr to anything as string litterals already have static lifetime
@@ -30,7 +30,7 @@ public:
 
 	// don't accept c-strings in the form of pointer
 	// if you need to create a const_string from a c string use the explicit conversion to string_view
-	template <class T>
+	template<class T>
 	const_string( T const* const& other ) = delete;
 
 	/* ############### Special member functions ######################################## */
@@ -46,7 +46,7 @@ public:
 	const_string& operator=( const_string&& other ) noexcept
 	{
 		this->_as_strview() = std::exchange( other._as_strview(), std::string_view{} );
-		_data				= std::move( other._data );
+		_data               = std::move( other._data );
 		return *this;
 	}
 
@@ -55,23 +55,24 @@ public:
 	{
 		const_string retval;
 		retval._as_strview() = this->_as_strview().substr( offset, count );
-		retval._data		 = this->_data;
+		retval._data         = this->_data;
 		return retval;
 	}
 
-	const_string substr(std::string_view range) const
+	const_string substr( std::string_view range ) const
 	{
-		assert(data() <= range.data() && range.data()+range.size() <= data()+size());
+		assert( data() <= range.data() && range.data() + range.size() <= data() + size() );
 		const_string retval;
 		retval._as_strview() = range;
-		retval._data = this->_data;
+		retval._data         = this->_data;
 		return retval;
 	}
 
-	const_string substr(iterator start, iterator end) const
+	const_string substr( iterator start, iterator end ) const
 	{
-		// UGLY: start-begin()+data() is necessary to convert from an iterator to a pointer on platforms where they are not the same type
-		return substr(std::string_view(start-begin()+data(), static_cast<size_type>(end-start)));
+		// UGLY: start-begin()+data() is necessary to convert from an iterator to a pointer on platforms where they are
+		// not the same type
+		return substr( std::string_view( start - begin() + data(), static_cast<size_type>( end - start ) ) );
 	}
 
 	const_string substr_sentinel( size_t offset, char sentinel ) const
@@ -85,18 +86,19 @@ public:
 	std::pair<const_string, const_string> split( std::size_t i ) const
 	{
 		assert( i < size() || i == npos );
-		if( i == npos ) { return {*this, {}}; }
+		if( i == npos ) {
+			return {*this, {}};
+		}
 		return {substr( 0, i ), substr( i, npos )};
 	}
 
 	std::pair<const_string, const_string> split( std::size_t i, Split s ) const
 	{
 		assert( i < size() || i == npos );
-		if( i == npos ) { return {*this, {}}; }
-		return {
-			substr( 0, i + ( s == Split::After ) ),
-			substr( i + ( s == Split::After || s == Split::Drop ), npos )
-		};
+		if( i == npos ) {
+			return {*this, {}};
+		}
+		return {substr( 0, i + ( s == Split::After ) ), substr( i + ( s == Split::After || s == Split::Drop ), npos )};
 	}
 
 	std::pair<const_string, const_string> split_first( char c = ' ', Split s = Split::Drop ) const
@@ -170,7 +172,7 @@ protected:
 			return;
 		}
 		// create buffer and copy data over
-		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>(other.size()) );
+		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>( other.size() ) );
 		std::copy_n( other.data(), other.size(), data.get() );
 
 		// initialize ConstString data fields;
@@ -202,7 +204,7 @@ public:
 	}
 
 	// NOTE: Use only for string literals (arrays with static storage duration)!!!
-	template <size_t N>
+	template<size_t N>
 	constexpr const_zstring( const char ( &other )[N] ) noexcept
 		: const_string( other )
 	{
@@ -210,7 +212,7 @@ public:
 	const char* c_str() const { return this->data(); }
 
 private:
-	template <class... ARGS>
+	template<class... ARGS>
 	friend const_zstring concat( const ARGS&... args );
 
 	//######## impl helper for concat ###############
@@ -219,17 +221,17 @@ private:
 		buffer = std::copy_n( str.data(), str.size(), buffer );
 	}
 
-	template <class... ARGS>
+	template<class... ARGS>
 	inline static void _write_to_buffer( char* buffer, const ARGS&... args )
 	{
 		( _addTo( buffer, args ), ... );
 	}
 
-	template <class... ARGS>
+	template<class... ARGS>
 	inline static const_zstring _concat_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
-		auto		 data	 = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto         data    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( data.get(), args... );
 		return const_zstring( std::move( data ), newSize );
 	}
@@ -261,7 +263,7 @@ inline const_zstring const_string::createZStr() &&
 /**
  * Function that can concatenate an arbitrary number of objects from which a std::string_view can be constructed
  */
-template <class... ARGS>
+template<class... ARGS>
 const_zstring concat( const ARGS&... args )
 {
 	return const_zstring::_concat_impl( std::string_view( args )... );
@@ -273,21 +275,22 @@ inline const const_string& getEmptyConstString()
 	return str;
 }
 
-#define CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(NAME , CMP)								\
-template<class T1, class T2,																\
-	class = std::enable_if_t<std::is_convertible<T1, std::string_view>::value>,				\
-	class = std::enable_if_t<std::is_convertible<T2, std::string_view>::value>>				\
-constexpr bool NAME (T1&& lhs, T2&& rhs) noexcept									\
-{																							\
-	return static_cast<std::string_view>( lhs ) CMP static_cast<std::string_view>( rhs );	\
-}																							\
+#define CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( NAME, CMP )                                                       \
+	template<class T1,                                                                                                 \
+			 class T2,                                                                                                 \
+			 class = std::enable_if_t<std::is_convertible<T1, std::string_view>::value>,                               \
+			 class = std::enable_if_t<std::is_convertible<T2, std::string_view>::value>>                               \
+	constexpr bool NAME( T1&& lhs, T2&& rhs ) noexcept                                                                 \
+	{                                                                                                                  \
+		return static_cast<std::string_view>( lhs ) CMP static_cast<std::string_view>( rhs );                          \
+	}
 
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator== ,== )
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator!= ,!= )
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator<  ,<  )
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator<= ,<= )
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator>  ,>  )
-CONST_STRING_DEFINE_CONST_STRING_COMPARATOR(operator>= ,>= )
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator==, ==)
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator!=, !=)
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator<, <)
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator<=, <=)
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator>, >)
+CONST_STRING_DEFINE_CONST_STRING_COMPARATOR( operator>=, >=)
 
 #undef CONST_STRING_DEFINE_CONST_STRING_COMPARATOR
 
