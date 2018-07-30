@@ -81,6 +81,7 @@ public:
 	}
 
 	enum class Split { Drop, Before, After };
+
 	std::pair<const_string, const_string> split( std::size_t i ) const
 	{
 		assert( i < size() || i == npos );
@@ -92,28 +93,19 @@ public:
 	{
 		assert( i < size() || i == npos );
 		if( i == npos ) { return {*this, {}}; }
-		return {substr( 0, i + ( s == Split::After ) ), substr( i + ( s == Split::After || s == Split::Drop ), npos )};
+		return {
+			substr( 0, i + ( s == Split::After ) ),
+			substr( i + ( s == Split::After || s == Split::Drop ), npos )
+		};
 	}
 
-	std::pair<const_string, const_string> split_first() const
-	{
-		auto pos = this->find( ' ' );
-		return split( pos, Split::Drop );
-	}
-
-	std::pair<const_string, const_string> split_last() const
-	{
-		auto pos = this->rfind( ' ' );
-		return split( pos, Split::Drop );
-	}
-
-	std::pair<const_string, const_string> split_first( char c, Split s = Split::Drop ) const
+	std::pair<const_string, const_string> split_first( char c = ' ', Split s = Split::Drop ) const
 	{
 		auto pos = this->find( c );
 		return split( pos, s );
 	}
 
-	std::pair<const_string, const_string> split_last( char c, Split s = Split::Drop ) const
+	std::pair<const_string, const_string> split_last( char c = ' ', Split s = Split::Drop ) const
 	{
 		auto pos = this->rfind( c );
 		return split( pos, s );
@@ -133,15 +125,6 @@ public:
 			ret.push_back( std::move( split_part ) );
 		}
 		return ret;
-
-		// auto const				size	   = this->size();
-		// const_string::size_type next_start = 0;
-		//// danger: first, we are creating the strings as if from a string litteral - the ref_count is bumped later
-		// for( int i = 0; i < size; ++i ) {
-		//	if( data()[i] == delimiter ) {
-		//		ret.emplace_back( std::string_view( data() + next_start, i - next_start ), static_lifetime_tag {} );
-		//	}
-		//}
 	}
 
 	bool isZeroTerminated() const { return this->data()[size()] == '\0'; }
