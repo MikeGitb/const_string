@@ -23,7 +23,15 @@ else()
 			-fno-omit-frame-pointer
 			-g
 			-fsanitize=undefined
-			-Wall -Wextra -Werror -Wno-unused-variable
+			-fsanitize=address
+			-O1
+			-Wall -Wextra
+	)
+	target_link_libraries(const_string_test
+		PUBLIC
+			-fsanitize=undefined
+			-fsanitize=address
+			-lgcov --coverage
 	)
 endif()
 
