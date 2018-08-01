@@ -136,7 +136,7 @@ TEST_CASE( "thread" )
 	std::atomic_int total_s2_fail_cnt    = 0;
 
 	auto f = [&, s1, s2] {
-		int sum            = 0;
+		std::size_t sum    = 0;
 		int cpps1_fail_cnt = 0;
 		int cpps2_fail_cnt = 0;
 		int s1_fail_cnt    = 0;

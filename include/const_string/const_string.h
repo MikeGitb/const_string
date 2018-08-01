@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
+#include <numeric>
 #include <string_view>
 #include <vector>
 
@@ -116,21 +117,32 @@ public:
 	std::vector<const_string> split_full( char delimiter ) const
 	{
 		std::vector<const_string> ret;
-		ret.reserve( 10 );
+		if( size() == 0 ) {
+			return ret;
+		}
+		ret.reserve( 5 ); // Arbitrarily chosen value TODO: check if actually beneficial
 
-		iterator it = this->begin();
-		while( true ) {
-			auto new_it = std::find( it, this->end(), delimiter );
-			assert( new_it >= it );
-			const std::string_view subview{&( *it ), static_cast<std::size_t>( new_it - it )};
-			ret.push_back( const_string( subview, _data, detail::defer_ref_cnt_tag_t{} ) );
-			if( new_it == end() ) {
-				break;
-			}
-			it = new_it + 1;
+		std::string_view self_view = this->_as_strview();
+
+		std::size_t start_pos = 0;
+		std::size_t found_pos = 0;
+
+		while( found_pos != std::string_view::npos && start_pos != this->size() ) {
+
+			found_pos = this->find( delimiter, start_pos );
+
+			// std::string_view::substr(offset,count) allows count to be bigger than size,
+			// so we don't have to check for npos here
+			const auto new_slice = self_view.substr( start_pos, found_pos - start_pos );
+
+			// ref count will be incremented at the end of the function, once the total number of slices will be known
+			// constructor is private, so we can't use emplace_back here
+			ret.push_back( const_string( new_slice, _data, detail::defer_ref_cnt_tag_t{} ) );
+
+			start_pos = found_pos + 1;
 		}
 
-		_data.add_ref_cnt( ret.size() );
+		_data.add_ref_cnt( static_cast<int>( ret.size() ) );
 
 		return ret;
 	}
@@ -151,7 +163,9 @@ protected:
 	{
 	}
 
-	constexpr const_string( std::string_view sv, const detail::atomic_ref_cnt_buffer& data, detail::defer_ref_cnt_tag_t )
+	constexpr const_string( std::string_view                     sv,
+							const detail::atomic_ref_cnt_buffer& data,
+							detail::defer_ref_cnt_tag_t )
 		: std::string_view( sv )
 		, _data{data, detail::defer_ref_cnt_tag_t{}}
 	{
