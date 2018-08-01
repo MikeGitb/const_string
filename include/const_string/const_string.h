@@ -224,8 +224,12 @@ public:
 	const char* c_str() const { return this->data(); }
 
 private:
-	template<class... ARGS>
-	friend const_zstring concat( const ARGS&... args );
+	template<class ARG1, class... ARGS>
+	friend auto concat( const ARG1 arg1, const ARGS&... args )
+		-> std::enable_if_t<std::is_convertible_v<ARG1, std::string_view>, const_zstring>;
+
+	template<class T>
+	friend auto concat( const T& args ) -> std::enable_if_t<!std::is_convertible_v<T, std::string_view>, const_zstring>;
 
 	//######## impl helper for concat ###############
 	static void _addTo( char*& buffer, const std::string_view str )
@@ -240,11 +244,27 @@ private:
 	}
 
 	template<class... ARGS>
-	inline static const_zstring _concat_impl( const ARGS&... args )
+	inline static const_zstring _concat_var_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
 		auto         data    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( data.get(), args... );
+		return const_zstring( std::move( data ), newSize );
+	}
+
+	template<class T>
+	inline static const_zstring _concat_range_impl( const std::vector<T>& args )
+	{
+		const size_t newSize
+			= std::accumulate( args.begin(), args.end(), std::size_t( 0 ), []( std::size_t s, const auto& str ) {
+				  return s + str.size();
+			  } );
+
+		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto ptr  = data.get();
+		for( auto&& e : args ) {
+			_addTo( ptr, std::string_view( e ) );
+		}
 		return const_zstring( std::move( data ), newSize );
 	}
 };
@@ -275,10 +295,17 @@ inline const_zstring const_string::createZStr() &&
 /**
  * Function that can concatenate an arbitrary number of objects from which a std::string_view can be constructed
  */
-template<class... ARGS>
-const_zstring concat( const ARGS&... args )
+template<class ARG1, class... ARGS>
+auto concat( const ARG1 arg1, const ARGS&... args )
+	-> std::enable_if_t<std::is_convertible_v<ARG1, std::string_view>, const_zstring>
 {
-	return const_zstring::_concat_impl( std::string_view( args )... );
+	return const_zstring::_concat_var_impl( std::string_view( arg1 ), std::string_view( args )... );
+}
+
+template<class T>
+auto concat( const T& args ) -> std::enable_if_t<!std::is_convertible_v<T, std::string_view>, const_zstring>
+{
+	return const_zstring::_concat_range_impl( args );
 }
 
 inline const const_string& getEmptyConstString()
