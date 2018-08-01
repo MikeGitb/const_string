@@ -6,6 +6,11 @@ option(CONST_STRING_COVERAGE "Generate coverage data" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 
+if(MSVC)
+	add_compile_options(/permissive- )
+	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+endif()
+
 find_package(Catch2 CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -14,11 +19,13 @@ target_link_libraries(const_string_test PUBLIC const_string Catch2::Catch2 Threa
 target_compile_definitions(const_string_test PUBLIC -DCONST_STRING_DEBUG_HOOKS)
 
 if(MSVC)
-	target_compile_options(const_string_test
-		PUBLIC
-			/permissive-
-			-D_SCL_SECURE_NO_WARNINGS
-	)
+	add_compile_options(/permissive- )
+	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+#	target_compile_options(const_string_test
+#		PUBLIC
+#			/permissive-
+#			-D_SCL_SECURE_NO_WARNINGS
+#	)
 else()
 	target_compile_options(const_string_test
 		PUBLIC
@@ -57,3 +64,9 @@ endif()
 
 include(ParseAndAddCatchTests)
 ParseAndAddCatchTests(const_string_test)
+
+
+
+add_executable(const_string_benchmark benchmark_split.cpp)
+target_compile_definitions(const_string_benchmark PUBLIC -DCONST_STRING_DEBUG_HOOKS)
+target_link_libraries(const_string_benchmark PUBLIC const_string Threads::Threads)
