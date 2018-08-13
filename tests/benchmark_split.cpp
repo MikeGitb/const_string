@@ -64,12 +64,12 @@ const_string run( const std::vector<const_string>& s, const std::vector<char>& s
 		size_t i = 0;
 
 		for( auto&& s : cstrings ) {
+			static_assert( 0 < Algo && Algo < 2 , "No algorithm with that number available at the moment" );
 			if constexpr( Algo == 1 ) {
 				tmp[i++] = s.split_full( split_char );
-			} else {
+			} /*else {
 				// put other algorithm here
-				static_assert( false, "No algorithm with that number available at the moment" );
-			}
+			} */
 		}
 		cstrings = flatten( tmp );
 	}
