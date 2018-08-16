@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-std::vector<std::string> generate_random_strings()
+std::vector<std::string> generate_random_strings(int cnt)
 {
 	std::vector<std::string> ret;
 
@@ -30,7 +30,7 @@ std::vector<std::string> generate_random_strings()
 
 	base = base + base + base + base + base + base + base;
 
-	for( int i = 0; i < 40; ++i ) {
+	for( int i = 0; i < cnt; ++i ) {
 		std::shuffle( base.begin(), base.end(), std::random_device{} );
 		ret.push_back( base );
 	}
@@ -103,10 +103,11 @@ void test_algo( const std::vector<const_string>& s, const std::vector<char>& spl
 
 int main()
 {
-	const auto my_strings = generate_random_strings();
+	const auto my_strings = generate_random_strings(40);
 
 	const std::vector<char>   split_chars{' ', ':', '/', ';', ','};
 	std::vector<const_string> cstrings;
+
 	for( const auto& s : my_strings ) {
 		cstrings.push_back( const_string( s ) );
 	}
