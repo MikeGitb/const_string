@@ -14,7 +14,7 @@ endif()
 find_package(Catch2 CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 
-add_executable(const_string_test main.cpp tests.cpp test_split.cpp test_substr.cpp)
+add_executable(const_string_test main.cpp tests.cpp test_split.cpp test_substr.cpp test_allocation.cpp test_ref_cnt_buf.cpp test_ref_cnt_buf2.cpp test_tree.cpp)
 target_link_libraries(const_string_test PUBLIC const_string Catch2::Catch2 Threads::Threads)
 target_compile_definitions(const_string_test PUBLIC -DCONST_STRING_DEBUG_HOOKS)
 
@@ -64,8 +64,6 @@ endif()
 
 include(ParseAndAddCatchTests)
 ParseAndAddCatchTests(const_string_test)
-
-
 
 add_executable(const_string_benchmark benchmark_split.cpp)
 target_compile_definitions(const_string_benchmark PUBLIC -DCONST_STRING_DEBUG_HOOKS)
