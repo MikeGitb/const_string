@@ -174,9 +174,9 @@ protected:
 	/**
 	 * private constructor, that takes ownership of a buffer and a size (used in _copyFrom and _concat_impl)
 	 */
-	const_string( detail::atomic_ref_cnt_buffer&& data, size_t size )
-		: std::string_view( data.get(), size )
-		, _data( std::move( data ) )
+	const_string( detail::atomic_ref_cnt_buffer&& handle, const char* data, size_t size )
+		: std::string_view( data, size )
+		, _data( std::move( handle ) )
 	{
 	}
 
@@ -198,11 +198,11 @@ protected:
 			return;
 		}
 		// create buffer and copy data over
-		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>( other.size() ) );
-		std::copy_n( other.data(), other.size(), data.get() );
+		auto result = detail::allocate_null_terminated_char_buffer( static_cast<int>( other.size() ) );
+		std::copy_n( other.data(), other.size(), result.data );
 
 		// initialize ConstString data fields;
-		*this = const_string( std::move( data ), other.size() );
+		*this = const_string( std::move( result.handle ), result.data, other.size() );
 	}
 };
 
@@ -261,9 +261,9 @@ private:
 	inline static const_zstring _concat_var_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
-		auto         data    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
-		_write_to_buffer( data.get(), args... );
-		return const_zstring( std::move( data ), newSize );
+		auto         res    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		_write_to_buffer( res.data, args... );
+		return const_zstring( std::move( res.handle ), res.data, newSize );
 	}
 
 	template<class T>
@@ -274,12 +274,12 @@ private:
 				  return s + str.size();
 			  } );
 
-		auto data = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
-		auto ptr  = data.get();
+		auto res = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto ptr  = res.data;
 		for( auto&& e : args ) {
 			_addTo( ptr, std::string_view( e ) );
 		}
-		return const_zstring( std::move( data ), newSize );
+		return const_zstring( std::move( res.handle ), ptr, newSize );
 	}
 };
 

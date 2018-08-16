@@ -179,11 +179,18 @@ private:
 	Cnt_t* _cnt = nullptr;
 };
 
-inline detail::atomic_ref_cnt_buffer allocate_null_terminated_char_buffer( int size )
+struct AllocResult {
+	char*                 data;
+	atomic_ref_cnt_buffer handle;
+};
+
+inline AllocResult allocate_null_terminated_char_buffer( int size )
 {
-	detail::atomic_ref_cnt_buffer data( size + 1 );
-	data.get()[size] = '\0'; // zero terminate
-	return data;
+	atomic_ref_cnt_buffer handle( size + 1 );
+	auto                  data = handle.get();
+
+	data[size] = '\0'; // zero terminate
+	return {data,std::move(handle)};
 }
 
 inline constexpr std::string_view getEmptyZeroTerminatedStringView()
