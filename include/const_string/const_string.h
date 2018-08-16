@@ -1,7 +1,7 @@
 #ifndef CONST_STRING_CONST_STRING_H
 #define CONST_STRING_CONST_STRING_H
 
-#include "detail/ref_cnt_buf.h"
+#include "detail/ref_cnt_buf2.h"
 
 #include <algorithm>
 #include <atomic>
@@ -137,7 +137,7 @@ public:
 
 			// ref count will be incremented at the end of the function, once the total number of slices will be known
 			// constructor is private, so we can't use emplace_back here
-			ret.push_back( const_string( new_slice, _data, detail::defer_ref_cnt_tag_t{} ) );
+			ret.push_back( const_string( new_slice, _data, mba::const_string::detail::defer_ref_cnt_tag_t{} ) );
 
 			start_pos = found_pos + 1;
 		}
@@ -154,7 +154,7 @@ public:
 	const_zstring createZStr() &&;
 
 protected:
-	detail::atomic_ref_cnt_buffer _data;
+	mba::const_string::detail::atomic_ref_cnt_buffer _data;
 
 	class static_lifetime_tag {
 	};
@@ -164,17 +164,17 @@ protected:
 	}
 
 	constexpr const_string( std::string_view                     sv,
-							const detail::atomic_ref_cnt_buffer& data,
-							detail::defer_ref_cnt_tag_t )
+							const mba::const_string::detail::atomic_ref_cnt_buffer& data,
+							mba::const_string::detail::defer_ref_cnt_tag_t )
 		: std::string_view( sv )
-		, _data{data, detail::defer_ref_cnt_tag_t{}}
+		, _data{data, mba::const_string::detail::defer_ref_cnt_tag_t{}}
 	{
 	}
 
 	/**
 	 * private constructor, that takes ownership of a buffer and a size (used in _copyFrom and _concat_impl)
 	 */
-	const_string( detail::atomic_ref_cnt_buffer&& handle, const char* data, size_t size )
+	const_string( mba::const_string::detail::atomic_ref_cnt_buffer&& handle, const char* data, size_t size )
 		: std::string_view( data, size )
 		, _data( std::move( handle ) )
 	{
@@ -198,7 +198,8 @@ protected:
 			return;
 		}
 		// create buffer and copy data over
-		auto result = detail::allocate_null_terminated_char_buffer( static_cast<int>( other.size() ) );
+		auto result
+			= mba::const_string::detail::allocate_null_terminated_char_buffer( static_cast<int>( other.size() ) );
 		std::copy_n( other.data(), other.size(), result.data );
 
 		// initialize ConstString data fields;
@@ -211,11 +212,13 @@ class const_zstring : public const_string {
 
 public:
 	constexpr const_zstring()
-		: const_string( detail::getEmptyZeroTerminatedStringView(), const_string::static_lifetime_tag{} )
+		: const_string( mba::const_string::detail::getEmptyZeroTerminatedStringView(),
+						const_string::static_lifetime_tag{} )
 	{
 	}
 	const_zstring( std::string_view other )
-		: const_string( other.data() == nullptr ? detail::getEmptyZeroTerminatedStringView() : other )
+		: const_string( other.data() == nullptr ? mba::const_string::detail::getEmptyZeroTerminatedStringView()
+												: other )
 	{
 	}
 
@@ -261,7 +264,7 @@ private:
 	inline static const_zstring _concat_var_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
-		auto         res    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto res = mba::const_string::detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( res.data, args... );
 		return const_zstring( std::move( res.handle ), res.data, newSize );
 	}
@@ -274,7 +277,7 @@ private:
 				  return s + str.size();
 			  } );
 
-		auto res = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto res = mba::const_string::detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		auto ptr  = res.data;
 		for( auto&& e : args ) {
 			_addTo( ptr, std::string_view( e ) );

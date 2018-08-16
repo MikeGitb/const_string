@@ -2,6 +2,7 @@
 #define CONST_STRING_DETAIL_REF_CNT_BUF_H
 
 #include "allocation.h"
+//#include "handle.h"
 
 #include <atomic>
 #include <cassert>
@@ -10,7 +11,7 @@
 #include <string_view>
 #include <utility>
 
-namespace detail {
+namespace mba::const_string::detail {
 
 #ifdef CONST_STRING_DEBUG_HOOKS
 struct Stats {
@@ -90,7 +91,7 @@ class atomic_ref_cnt_buffer {
 public:
 	constexpr atomic_ref_cnt_buffer() noexcept = default;
 
-	constexpr atomic_ref_cnt_buffer(mba::detail::DataHandle&& handle)
+	constexpr atomic_ref_cnt_buffer(DataHandle&& handle)
 		: _handle{std::move(handle)}
 	{
 	}
@@ -99,12 +100,6 @@ public:
 		: _handle{other._handle}
 	{
 	}
-
-	//explicit atomic_ref_cnt_buffer( int buffer_size )
-	//{
-	//	stats().alloc();
-	//	_handle = mba::detail::alloc.alloc( buffer_size ).handle;
-	//}
 
 	atomic_ref_cnt_buffer( const atomic_ref_cnt_buffer& other ) noexcept
 		: _handle{other._handle}
@@ -137,7 +132,7 @@ public:
 
 	~atomic_ref_cnt_buffer() { _decref(); }
 
-	char* get() noexcept { return _handle.get_data(); }
+	const char* get() noexcept { return _handle.get_data(); }
 
 	friend void swap( atomic_ref_cnt_buffer& l, atomic_ref_cnt_buffer& r ) noexcept { std::swap( l._handle, r._handle ); }
 
@@ -169,15 +164,9 @@ private:
 		_handle.inc_ref();
 	}
 
-	mba::detail::DataHandle _handle {};
+	DataHandle _handle {};
 };
 
-//inline detail::atomic_ref_cnt_buffer allocate_null_terminated_char_buffer( int size )
-//{
-//	detail::atomic_ref_cnt_buffer data( size + 1 );
-//	data.get()[size] = '\0'; // zero terminate
-//	return data;
-//}
 
 struct AllocResult {
 	char*                 data;
@@ -187,7 +176,7 @@ struct AllocResult {
 inline AllocResult allocate_null_terminated_char_buffer( int size )
 {
 	stats().alloc();
-	auto ret = mba::detail::alloc.alloc( size + 1 );
+	auto ret = alloc.alloc( size + 1 );
 
 	atomic_ref_cnt_buffer handle( std::move(ret.handle) );
 

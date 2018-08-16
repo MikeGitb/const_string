@@ -123,6 +123,6 @@ int main()
 	//test_algo<2>( cstrings, split_chars );
 	//std::cout << "========================================================" << std::endl;
 	//test_algo<1>( cstrings, split_chars );
-	std::cout << detail::stats().get_total_allocs() << std::endl;
+	std::cout << mba::const_string::detail::stats().get_total_allocs() << std::endl;
 	std::cout << "========================================================" << std::endl;
 }

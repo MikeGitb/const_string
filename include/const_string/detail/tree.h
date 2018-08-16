@@ -42,11 +42,12 @@ struct Node {
 
 	// data ordered according to decreasing frequency of change (separates frequently and rarely changing data into
 	// separate cache lines)
-
+private:
 	T                          _data{};
 	std::array<child_ptr_t, 2> _children{nullptr, nullptr};
 	const node_id_t            _blockId;
 
+public:
 	constexpr Node( const node_id_t id ) noexcept
 		: _blockId( id )
 	{
@@ -59,6 +60,9 @@ struct Node {
 	}
 
 	constexpr node_id_t id() const noexcept { return _blockId; }
+
+	constexpr T&       data() noexcept { return _data; }
+	constexpr const T& data() const noexcept { return _data; }
 
 	child_ptr_t& left_child() noexcept { return _children[0]; }
 	child_ptr_t& right_child() noexcept { return _children[1]; }
@@ -92,13 +96,17 @@ Node<T>& get_node( Node<T>& root, const node_id_t id )
 	for( int i = remaining_bit_cnt; i > 0; --i ) {
 		assert( cblock != nullptr );
 		// scan id from highest to lowest
-		cblock = cblock->_children[( to_uType( id ) >> (i-1) ) & 0x1];
+		if( ( to_uType( id ) >> ( i - 1 ) ) & 0x1 ) {
+			cblock = cblock->right_child();
+		} else {
+			cblock = cblock->left_child();
+		}
 	}
 	return *cblock;
 }
 
 template<class T>
-class Tree {
+struct Tree {
 	using node_type = Node<T>;
 	node_type root{node_id_t{1}};
 
@@ -106,6 +114,10 @@ class Tree {
 
 	node_type& getNode( node_id_t id ) { return get_node( root, id ); }
 
+	// WARNING: If this function is called concurrently from multiple
+	// threads, some updates might get lost (but there will be no corruption)
+	//
+	void grow_by_one_level() { grow_to_height( _height + 1 ); }
 	void grow_to_height( int target_height )
 	{
 		if( target_height <= _height.load() ) {

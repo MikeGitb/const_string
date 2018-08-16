@@ -1,6 +1,8 @@
 #ifndef CONST_STRING_DETAIL_REF_CNT_BUF_H
 #define CONST_STRING_DETAIL_REF_CNT_BUF_H
 
+//#include "handle.h"
+
 #include <atomic>
 #include <cassert>
 #include <cstdint>
@@ -8,7 +10,7 @@
 #include <string_view>
 #include <utility>
 
-namespace detail {
+namespace mba::const_string::detail {
 
 #ifdef CONST_STRING_DEBUG_HOOKS
 struct Stats {
