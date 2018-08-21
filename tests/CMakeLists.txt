@@ -73,5 +73,5 @@ include(ParseAndAddCatchTests)
 ParseAndAddCatchTests(const_string_test)
 
 add_executable(const_string_benchmark benchmark_split.cpp)
-target_compile_definitions(const_string_benchmark PUBLIC -DCONST_STRING_DEBUG_HOOKS)
+#target_compile_definitions(const_string_benchmark PUBLIC -DCONST_STRING_DEBUG_HOOKS)
 target_link_libraries(const_string_benchmark PUBLIC const_string Threads::Threads)

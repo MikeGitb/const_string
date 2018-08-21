@@ -66,7 +66,7 @@ struct Stats {
 	constexpr void alloc() noexcept {}
 	constexpr void dealloc() noexcept {}
 
-	constexpr std::uint64_t get_total_cnt_accesses() noexcept const { return 0; };
+	constexpr std::uint64_t get_total_cnt_accesses() const noexcept { return 0; };
 	constexpr std::uint64_t get_total_allocs() const noexcept { return 0; };
 	constexpr std::uint64_t get_current_allocs() const noexcept { return 0; };
 	constexpr std::uint64_t get_inc_ref_cnt() const noexcept { return 0; };

@@ -4,12 +4,13 @@
 #include <atomic>
 #include <cassert>
 #include <cstdint>
+#include <climits>
 
 namespace mba::const_string::detail {
 
+
 constexpr int get_index_of_highest_set_bit( int val )
 {
-
 	int cnt = 0;
 	while( val ) {
 		val >>= 1;
@@ -17,6 +18,19 @@ constexpr int get_index_of_highest_set_bit( int val )
 	}
 	return cnt - 1;
 }
+
+inline int get_index_of_highest_set_bit_intrinsic(int val)
+{
+#ifdef _MSC_VER
+	unsigned long index = 0;
+	_BitScanReverse( &index, val );
+	return index;
+#else
+	return 32 - __builtin_clz( val );
+	//return get_index_of_highest_set_bit(val);
+#endif
+}
+
 
 template<class T>
 constexpr auto to_uType( T v ) noexcept
@@ -71,7 +85,7 @@ public:
 constexpr int get_number_of_leading_zeros( node_id_t val )
 {
 	// TODO use indriniscs like __builtin_clz
-	constexpr auto bit_cnt = sizeof( val ) * CHAR_BIT;
+	constexpr int bit_cnt = sizeof( val ) * CHAR_BIT;
 	const auto     lid     = to_uType( val );
 	assert( lid != 0 );
 
@@ -89,7 +103,9 @@ constexpr int get_number_of_leading_zeros( node_id_t val )
 template<class T>
 Node<T>& get_node( Node<T>& root, const node_id_t id )
 {
-	const int remaining_bit_cnt = get_number_of_leading_zeros( root.id() ) - get_number_of_leading_zeros( id );
+	//const int remaining_bit_cnt = get_number_of_leading_zeros( root.id() ) - get_number_of_leading_zeros( id );
+	const int remaining_bit_cnt
+		= get_index_of_highest_set_bit_intrinsic( (int)id ) - get_index_of_highest_set_bit_intrinsic( (int)root.id() );
 	assert( remaining_bit_cnt >= 0 );
 
 	auto cblock = &root;

@@ -1,7 +1,7 @@
 #ifndef CONST_STRING_CONST_STRING_H
 #define CONST_STRING_CONST_STRING_H
 
-#include "detail/ref_cnt_buf2.h"
+#include "detail/ref_cnt_buf.h"
 
 #include <algorithm>
 #include <atomic>
@@ -13,6 +13,7 @@
 class const_zstring;
 class const_string : public std::string_view {
 	using Base_t = std::string_view;
+	using Handle_t = mba::const_string::detail::atomic_ref_cnt_buffer;
 
 public:
 	/* #################### CTORS ########################## */
@@ -154,7 +155,7 @@ public:
 	const_zstring createZStr() &&;
 
 protected:
-	mba::const_string::detail::atomic_ref_cnt_buffer _data;
+	Handle_t _data;
 
 	class static_lifetime_tag {
 	};

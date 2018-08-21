@@ -103,7 +103,7 @@ void test_algo( const std::vector<const_string>& s, const std::vector<char>& spl
 
 int main()
 {
-	const auto my_strings = generate_random_strings(40);
+	const auto my_strings = generate_random_strings(200);
 
 	const std::vector<char>   split_chars{' ', ':', '/', ';', ','};
 	std::vector<const_string> cstrings;

@@ -22,14 +22,17 @@ struct AllocSlots {
 private:
 	// data ordered according to decreasing frequency of change (separates frequently and rarely changing data into
 	// separate cache lines)
-	std::atomic_int                         _free_cnt{block_size};
-	std::array<std::atomic_int, block_size> _cnt{0};
+
+	using Cnt_t = std::int8_t;
+
+	std::atomic<std::int16_t>                  _free_cnt{block_size};
+	std::array<std::atomic<Cnt_t>, block_size> _cnt{0};
 	std::array<const char*, block_size>     _data{};
 
 	int _try_reserve( int start, int end )
 	{
 		int pos          = start;
-		int expected_cnt = 0;
+		Cnt_t expected_cnt = 0;
 		while( pos != end && !_cnt[pos].compare_exchange_strong( expected_cnt, 1 ) ) {
 			const auto pos_large = std::find( _cnt.begin() + pos, _cnt.begin() + end, 0 ) - _cnt.begin();
 			pos                  = static_cast<int>( pos_large );
@@ -87,7 +90,7 @@ class DataHandle {
 
 public:
 	constexpr DataHandle() noexcept = default;
-	constexpr DataHandle( nullptr_t ) noexcept {};
+	constexpr DataHandle( nullptr_t ) noexcept {}
 	constexpr DataHandle( node_id_t block_id, AllocSlots::local_id_t local_id ) noexcept
 		: _id{fuse( block_id, local_id )}
 	{
@@ -96,12 +99,12 @@ public:
 		assert( _id > 0 );
 		assert( blockId() == block_id );
 		assert( localId() == local_id );
-	};
+	}
 
 	constexpr node_id_t              blockId() const { return node_id_t{_id >> AllocSlots::local_bit_cnt}; }
 	constexpr AllocSlots::local_id_t localId() const
 	{
-		return AllocSlots::local_id_t{_id & AllocSlots::block_size - 1};
+		return AllocSlots::local_id_t{int(_id & (AllocSlots::block_size - 1))};
 	}
 
 	void        inc_ref() const;
@@ -115,7 +118,7 @@ private:
 	AllocSlots& get_slot_block() const;
 
 	using id_t                       = unsigned int;
-	static constexpr id_t Invalid_id = -1;	//TODO: switch to 0
+	static constexpr id_t Invalid_id = 0;	//TODO: switch to 0
 
 	id_t _id = Invalid_id;
 
