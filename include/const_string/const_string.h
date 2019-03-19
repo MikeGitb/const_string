@@ -344,7 +344,7 @@ struct const_string::split_range {
 
 	friend bool operator==( split_range l, end_iterator_t )
 	{
-		if( l.pos == const_string::npos ) {
+		if( l.pos == const_string::npos || l.full_string == nullptr || l.full_string->size() == l.pos ) {
 			return true;
 		}
 		return false;

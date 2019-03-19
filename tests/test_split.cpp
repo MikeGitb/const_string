@@ -2,7 +2,10 @@
 
 #include <catch2/catch.hpp>
 
+#include <algorithm>
 #include <iostream>
+
+#include "helpers.hpp"
 
 TEST_CASE( "Split Position" )
 {
@@ -154,5 +157,40 @@ TEST_CASE( "Split lazy" )
 	auto ref_it = ref.begin();
 	for( const auto& word : s.split_lazy( ' ' ) ) {
 		CHECK( word == *ref_it++ );
+	}
+}
+
+TEST_CASE( "Fuzzy Split" )
+{
+	const std::vector<char> split_chars{' ', ':', '/', ';', ','};
+	auto                    cstrings = to_const_strings( generate_random_strings( 2 ) );
+	for( char split_char : split_chars ) {
+		std::vector<std::vector<const_string>> tmp( cstrings.size() );
+
+		size_t i = 0;
+
+		for( auto s : cstrings ) {
+			auto words1 = s.split_full( split_char );
+
+			auto w1it = words1.begin();
+
+			std::vector<const_string> words2;
+			for( auto w : s.split_lazy( split_char ) ) {
+				if( w1it == words1.end() ) {
+					std::cout << words1.size() << std::endl;
+				}
+				CHECK( w1it != words1.end());
+				CHECK( std::string_view(w) == std::string_view(*w1it++) );
+				words2.push_back( std::move( w ) );
+			}
+			CHECK( words1 == words2 );
+			if( words1 != words2 ) {
+				auto it = std::mismatch( words1.begin(), words1.end(), words2.begin(), words2.end() );
+				std::cout << "\"" << *it.first << "\"!=\"" << *it.second << "\"" << std::endl;
+			}
+
+			tmp[i++] = std::move( words1 );
+		}
+		cstrings = flatten( tmp );
 	}
 }

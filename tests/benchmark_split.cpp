@@ -10,54 +10,8 @@
 #include <string>
 #include <vector>
 
-namespace {
 
-std::vector<std::string> generate_random_strings(int cnt)
-{
-	std::vector<std::string> ret;
-
-	// a bunch of random characters to start with
-	std::string base(
-		":::::::::::::::::::::::: "
-		"                                                                ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,     "
-		"sfladskjflasdjfslfslafdjlsadfjsafdsaljfdlsafdkjsaldfsadfsafowieuroquwreoqweurowqureowqieuroiwqeurouqwnfsalfvnn"
-		"sa"
-		"::::::::::::::::::::::::::"
-		"safsaHHQWWEEERRTTZUIOPPPOLksdfkasdfasfdsafdljdflsafdoweroiequrwoieurqoureowquerwqorewqureiwKKJHGFDSASDFGHFDsaf"
-		"dsaf"
-		"d                                                                "
-		"safdsafdsadfsadfsadfsadfsfasdfsadfsadfsadfsadfdsfafdafsfdsfwfwafs"
-		"adfasfwafSAYXCVBVCXCVBNMNBVCXSDFGH          :::::::::,,,,,,,,,,,,,;;;;;;;;;;;////////////"
-		"1231231981239123129387129387129381239817239172398127398217398172398123918273981739127391828312938721"
-		"91273198273192739182739812739821731287319823712938172398712931298371982317293127381928319273921319237129" );
-
-	base = base + base + base + base + base + base + base;
-
-	for( int i = 0; i < cnt; ++i ) {
-		std::shuffle( base.begin(), base.end(), std::random_device{} );
-		ret.push_back( base );
-	}
-	return ret;
-}
-
-}
-
-std::vector<const_string> flatten( std::vector<std::vector<const_string>>& collections )
-{
-	const std::size_t total_size
-		= std::accumulate( collections.begin(), collections.end(), size_t( 0 ), []( size_t size, const auto& e ) {
-			  return size + e.size();
-		  } );
-	std::vector<const_string> ret( total_size );
-
-	auto out_it = ret.begin();
-
-	for( auto&& c : collections ) {
-		out_it = std::move( c.begin(), c.end(), out_it );
-	}
-
-	return ret;
-}
+#include "helpers.hpp"
 
 // this will succcessively split the strings with each split_char
 template<int Algo>
@@ -115,14 +69,10 @@ void test_algo( const std::vector<const_string>& s, const std::vector<char>& spl
 
 int main()
 {
-	const auto my_strings = generate_random_strings(40);
-
 	const std::vector<char>   split_chars{' ', ':', '/', ';', ','};
-	std::vector<const_string> cstrings;
+	const std::vector<const_string> cstrings = to_const_strings( generate_random_strings( 40 ) );
 
-	for( const auto& s : my_strings ) {
-		cstrings.push_back( const_string( s ) );
-	}
+
 
 	test_algo<1>( cstrings, split_chars );
 	std::cout << "========================================================" << std::endl;
