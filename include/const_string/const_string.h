@@ -132,20 +132,24 @@ public:
 
 		std::size_t start_pos = 0;
 		std::size_t found_pos = 0;
+		try {
+			while( found_pos != std::string_view::npos && start_pos != this->size() ) {
 
-		while( found_pos != std::string_view::npos && start_pos != this->size() ) {
+				found_pos = this->find( delimiter, start_pos );
 
-			found_pos = this->find( delimiter, start_pos );
+				// std::string_view::substr(offset,count) allows count to be bigger than size,
+				// so we don't have to check for npos here
+				const auto new_slice = self_view.substr( start_pos, found_pos - start_pos );
 
-			// std::string_view::substr(offset,count) allows count to be bigger than size,
-			// so we don't have to check for npos here
-			const auto new_slice = self_view.substr( start_pos, found_pos - start_pos );
+				// ref count will be incremented at the end of the function, once the total number of slices will be known
+				// constructor is private, so we can't use emplace_back here
+				ret.emplace_back( new_slice, _data, detail::defer_ref_cnt_tag_t{} );
 
-			// ref count will be incremented at the end of the function, once the total number of slices will be known
-			// constructor is private, so we can't use emplace_back here
-			ret.push_back( const_string( new_slice, _data, detail::defer_ref_cnt_tag_t{} ) );
-
-			start_pos = found_pos + 1;
+				start_pos = found_pos + 1;
+			}
+		} catch( ... ) {
+			_data.add_ref_cnt( static_cast<int>( ret.size() ) );
+			throw;
 		}
 
 		_data.add_ref_cnt( static_cast<int>( ret.size() ) );
