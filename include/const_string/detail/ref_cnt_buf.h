@@ -8,6 +8,8 @@
 #include <string_view>
 #include <utility>
 
+class const_string;
+
 namespace detail {
 
 #ifdef CONST_STRING_DEBUG_HOOKS
@@ -77,7 +79,12 @@ static Stats& stats()
 	return stats;
 }
 
-class defer_ref_cnt_tag_t {
+struct defer_ref_cnt_tag_t {
+	constexpr defer_ref_cnt_tag_t( const defer_ref_cnt_tag_t& ) = default;
+
+private:
+	friend class ::const_string;
+	constexpr defer_ref_cnt_tag_t(){};
 };
 
 class atomic_ref_cnt_buffer {
@@ -190,7 +197,7 @@ inline AllocResult allocate_null_terminated_char_buffer( int size )
 	auto                  data = handle.get();
 
 	data[size] = '\0'; // zero terminate
-	return {data,std::move(handle)};
+	return {data, std::move( handle )};
 }
 
 inline constexpr std::string_view getEmptyZeroTerminatedStringView()

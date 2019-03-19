@@ -159,6 +159,13 @@ public:
 	const_zstring createZStr() const&;
 	const_zstring createZStr() &&;
 
+	constexpr const_string( std::string_view                     sv,
+							const detail::atomic_ref_cnt_buffer& data,
+							detail::defer_ref_cnt_tag_t )
+		: std::string_view( sv )
+		, _data{data, detail::defer_ref_cnt_tag_t{}}
+	{
+	}
 protected:
 	detail::atomic_ref_cnt_buffer _data;
 
@@ -169,13 +176,6 @@ protected:
 	{
 	}
 
-	constexpr const_string( std::string_view                     sv,
-							const detail::atomic_ref_cnt_buffer& data,
-							detail::defer_ref_cnt_tag_t )
-		: std::string_view( sv )
-		, _data{data, detail::defer_ref_cnt_tag_t{}}
-	{
-	}
 
 	/**
 	 * private constructor, that takes ownership of a buffer and a size (used in _copyFrom and _concat_impl)
