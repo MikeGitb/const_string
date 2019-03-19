@@ -84,7 +84,7 @@ public:
 
 	enum class Split { Drop, Before, After };
 
-	std::pair<const_string, const_string> split( std::size_t i ) const
+	std::pair<const_string, const_string> split_at_pos( std::size_t i ) const
 	{
 		assert( i < size() || i == npos );
 		if( i == npos ) {
@@ -93,7 +93,7 @@ public:
 		return {substr( 0, i ), substr( i, npos )};
 	}
 
-	std::pair<const_string, const_string> split( std::size_t i, Split s ) const
+	std::pair<const_string, const_string> split_at_pos( std::size_t i, Split s ) const
 	{
 		assert( i < size() || i == npos );
 		if( i == npos ) {
@@ -105,14 +105,18 @@ public:
 	std::pair<const_string, const_string> split_first( char c = ' ', Split s = Split::Drop ) const
 	{
 		auto pos = this->find( c );
-		return split( pos, s );
+		return split_at_pos( pos, s );
 	}
 
 	std::pair<const_string, const_string> split_last( char c = ' ', Split s = Split::Drop ) const
 	{
 		auto pos = this->rfind( c );
-		return split( pos, s );
+		return split_at_pos( pos, s );
 	}
+
+	struct split_range;
+
+	split_range split_lazy( char delimiter ) const;
 
 	std::vector<const_string> split_full( char delimiter ) const
 	{
@@ -120,7 +124,9 @@ public:
 		if( size() == 0 ) {
 			return ret;
 		}
-		ret.reserve( 5 ); // Arbitrarily chosen value TODO: check if actually beneficial
+		// NOTE: Reservation turned out not to be beneficial on my particular machine for a given benchmarK
+		// Only re-add after measurements have show the benefit.
+		//ret.reserve( 3 );  //Arbitrarily chosen value
 
 		std::string_view self_view = this->_as_strview();
 
@@ -261,7 +267,7 @@ private:
 	inline static const_zstring _concat_var_impl( const ARGS&... args )
 	{
 		const size_t newSize = ( 0 + ... + args.size() );
-		auto         res    = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
+		auto         res     = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
 		_write_to_buffer( res.data, args... );
 		return const_zstring( std::move( res.handle ), res.data, newSize );
 	}
@@ -275,7 +281,7 @@ private:
 			  } );
 
 		auto res = detail::allocate_null_terminated_char_buffer( static_cast<int>( newSize ) );
-		auto ptr  = res.data;
+		auto ptr = res.data;
 		for( auto&& e : args ) {
 			_addTo( ptr, std::string_view( e ) );
 		}
@@ -304,6 +310,54 @@ inline const_zstring const_string::createZStr() &&
 	} else {
 		return unshare();
 	}
+}
+
+struct const_string::split_range {
+	const const_string* full_string;
+	std::size_t   pos;
+	char          del;
+	struct end_iterator_t {
+	};
+
+	split_range& operator++()
+	{
+		pos = full_string->find( del, pos );
+		if( pos != npos ) {
+			pos++;
+		}
+		return *this;
+	}
+	const_string operator*() const {
+		return full_string->substr_sentinel( pos, del );
+	}
+
+	split_range    begin() const { return *this; }
+	end_iterator_t end() const { return {}; }
+
+
+
+	friend bool operator==( split_range l, split_range r )
+	{
+		return l.full_string == r.full_string && l.pos == r.pos;
+	}
+	friend bool operator!=( split_range l, split_range r ) { return !( l == r ); }
+
+	friend bool operator==( split_range l, end_iterator_t )
+	{
+		if( l.pos == const_string::npos ) {
+			return true;
+		}
+		return false;
+	}
+	friend bool operator!=( split_range l, end_iterator_t r )
+	{
+		return !( l == r );
+	}
+};
+
+inline const_string::split_range const_string::split_lazy( char delimiter ) const {
+	return const_string::split_range{this, 0, delimiter};
+
 }
 
 /**

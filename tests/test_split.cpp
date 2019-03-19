@@ -8,22 +8,22 @@ TEST_CASE( "Split Position" )
 {
 	const_string s( "Hello World" );
 	{
-		auto [h, w] = s.split( 5 );
+		auto [h, w] = s.split_at_pos( 5 );
 		REQUIRE( h == "Hello" );
 		REQUIRE( w == " World" );
 	}
 	{
-		auto [h, w] = s.split( 5, const_string::Split::Before );
+		auto [h, w] = s.split_at_pos( 5, const_string::Split::Before );
 		REQUIRE( h == "Hello" );
 		REQUIRE( w == " World" );
 	}
 	{
-		auto [h, w] = s.split( 5, const_string::Split::After );
+		auto [h, w] = s.split_at_pos( 5, const_string::Split::After );
 		REQUIRE( h == "Hello " );
 		REQUIRE( w == "World" );
 	}
 	{
-		auto [h, w] = s.split( 5, const_string::Split::Drop );
+		auto [h, w] = s.split_at_pos( 5, const_string::Split::Drop );
 		REQUIRE( h == "Hello" );
 		REQUIRE( w == "World" );
 	}
@@ -142,4 +142,17 @@ TEST_CASE( "Split full" )
 
 	CHECK( words.size() == 6 );
 	CHECK( words == ref );
+}
+
+TEST_CASE( "Split lazy" )
+{
+	std::vector<const_string> ref{"Hello", "my", "dear!", "How", "are", "you?"};
+
+	std::string  base = "Hello my dear! How are you?";
+	const_string s( base );
+
+	auto ref_it = ref.begin();
+	for( const auto& word : s.split_lazy( ' ' ) ) {
+		CHECK( word == *ref_it++ );
+	}
 }
